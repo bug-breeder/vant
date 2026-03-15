@@ -1,32 +1,30 @@
 # Vant Progress
 
-## Current Phase: 1 - Telex Engine [COMPLETE]
+## Current Phase: 2.5 - Tone Placement Fix [COMPLETE]
 Started: 2026-03-15
 Completed: 2026-03-15
 
 ### Tasks
-- [x] `event.rs` — SyllableEvent enum (Composing, Committed, Reset, Passthrough)
-- [x] `engine.rs` — TelexEngine with process_key(), force_commit(), reset()
-- [x] Unit tests — 42 engine tests (diacritics, tones, syllables, deferred, backspace, commit triggers, reset, edge cases)
-- [x] `ffi.rs` — VantEventType, VantKeyResult, VantEngine opaque type, 6 FFI functions
-- [x] `lib.rs` — FFI integration tests (9 tests)
-- [x] Generated `vant_engine.h` — all new C types and functions present
+- [x] `tone.rs` — Vietnamese syllable parser (initial consonant, vowels, final consonant)
+- [x] `tone.rs` — Tone detection/manipulation using vi crate utilities
+- [x] `tone.rs` — Tone position algorithm ported from xkey/Unikey rules
+- [x] `tone.rs` — `relocate_tone()` post-processor moves tone to correct vowel
+- [x] `engine.rs` — Wired `relocate_tone()` into `recompose()`
+- [x] Tests — 80 total (51 original + 6 tone relocation + 23 tone module unit tests)
 - [x] `make build` — full pipeline (Rust + Xcode) succeeds
 
-### Phase 1 Milestone: ACHIEVED
-51 tests pass. TelexEngine processes keystrokes, emits events, and is fully callable from C/Swift via FFI.
-
-## Next Phase: 2 - Minimal IME
-- InputMethodKit integration (VantInputController)
-- Wire VantEngine FFI calls to IMK event handling
-- Preedit (marked text) display from Composing events
-- Text insertion from Committed events
+### Phase 2.5 Milestone: ACHIEVED
+Fixed tone placement bugs where typing tone before final consonant put the mark on the wrong vowel (e.g., "Vịêt" → "Việt", "xúât" → "xuất"). Post-processing approach: vi crate handles diacritics, new tone.rs relocates misplaced tones using xkey-derived rules.
 
 ## Completed Phases
 - Phase 0: Scaffold (2026-03-15)
 - Phase 1: Telex Engine (2026-03-15)
+- Phase 2: Minimal IME (2026-03-15)
+- Phase 2.5: Tone Placement Fix (2026-03-15)
+
+## Next Phase: 3 - N-gram Prediction
+- Tier 1 FST dictionary
 
 ## Upcoming Phases
-- Phase 3: N-gram Prediction (Tier 1 FST dictionary)
 - Phase 4: RWKV Integration (Tier 2 inference, ghost text)
 - Phase 5: Polish (code-switching, settings, personalization)
