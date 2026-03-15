@@ -40,10 +40,12 @@ pub struct VantKeyResult {
     /// Composed or committed UTF-8 text. Valid until the next FFI call on
     /// the same engine.
     pub text: *const libc::c_char,
+    /// Byte length of `text` (UTF-8). Not the number of characters.
     pub text_len: u32,
     /// Raw keystroke buffer UTF-8. Valid until the next FFI call on the same
     /// engine.
     pub raw: *const libc::c_char,
+    /// Byte length of `raw` (ASCII, so bytes == characters).
     pub raw_len: u32,
     /// Trigger character codepoint, or 0 if none.
     pub committed_char: u32,
