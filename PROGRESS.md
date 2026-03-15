@@ -1,32 +1,32 @@
 # Vant Progress
 
-## Current Phase: 0 - Scaffold [COMPLETE]
+## Current Phase: 1 - Telex Engine [COMPLETE]
 Started: 2026-03-15
 Completed: 2026-03-15
 
 ### Tasks
-- [x] Git init + .gitignore + LICENSE + README
-- [x] CLAUDE.md (project conventions)
-- [x] Rust crate skeleton (vant-engine) — cargo build + test pass, vant_engine.h generated
-- [x] Xcode project skeleton (vant-macos) — xcodebuild succeeds for VantIME + Vant targets
-- [x] Build scripts + Makefile — `make build` works end-to-end
-- [x] Custom skills + agents — 4 skills + 2 agents created
-- [x] Vietnamese syllable data — 4,214 base syllables in vi_syllables.json
+- [x] `event.rs` — SyllableEvent enum (Composing, Committed, Reset, Passthrough)
+- [x] `engine.rs` — TelexEngine with process_key(), force_commit(), reset()
+- [x] Unit tests — 42 engine tests (diacritics, tones, syllables, deferred, backspace, commit triggers, reset, edge cases)
+- [x] `ffi.rs` — VantEventType, VantKeyResult, VantEngine opaque type, 6 FFI functions
+- [x] `lib.rs` — FFI integration tests (9 tests)
+- [x] Generated `vant_engine.h` — all new C types and functions present
+- [x] `make build` — full pipeline (Rust + Xcode) succeeds
 
-### Phase 0 Milestone: ACHIEVED
-`cargo build` + `xcodebuild` both succeed. `make build` orchestrates the full pipeline.
+### Phase 1 Milestone: ACHIEVED
+51 tests pass. TelexEngine processes keystrokes, emits events, and is fully callable from C/Swift via FFI.
 
-## Next Phase: 1 - Telex Engine
-- Wrap vi-rs in TelexEngine with process_key() API
-- Implement SyllableEvent emission system
-- Expose via C FFI (cbindgen auto-generates header)
-- Unit tests for all Telex rules + deferred diacritics
-
-## Upcoming Phases
-- Phase 2: Minimal IME (InputMethodKit integration)
-- Phase 3: N-gram Prediction (Tier 1 FST dictionary)
-- Phase 4: RWKV Integration (Tier 2 inference, ghost text)
-- Phase 5: Polish (code-switching, settings, personalization)
+## Next Phase: 2 - Minimal IME
+- InputMethodKit integration (VantInputController)
+- Wire VantEngine FFI calls to IMK event handling
+- Preedit (marked text) display from Composing events
+- Text insertion from Committed events
 
 ## Completed Phases
 - Phase 0: Scaffold (2026-03-15)
+- Phase 1: Telex Engine (2026-03-15)
+
+## Upcoming Phases
+- Phase 3: N-gram Prediction (Tier 1 FST dictionary)
+- Phase 4: RWKV Integration (Tier 2 inference, ghost text)
+- Phase 5: Polish (code-switching, settings, personalization)
