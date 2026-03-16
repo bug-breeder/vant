@@ -1,6 +1,7 @@
 pub mod engine;
 pub mod event;
 pub mod ffi;
+mod tone;
 
 #[cfg(test)]
 mod tests {

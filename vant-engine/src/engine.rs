@@ -1,4 +1,5 @@
 use crate::event::SyllableEvent;
+use crate::tone;
 
 /// Stateful Telex input engine. Wraps the `vi` crate's stateless
 /// `transform_buffer` to process keystrokes one at a time and emit
@@ -125,6 +126,8 @@ impl TelexEngine {
     fn recompose(&mut self) {
         self.last_composed.clear();
         vi::telex::transform_buffer(self.raw_buffer.iter().copied(), &mut self.last_composed);
+        tone::fix_incomplete_horn(&mut self.last_composed);
+        tone::relocate_tone(&mut self.last_composed);
     }
 
     fn clear(&mut self) {
@@ -499,6 +502,56 @@ mod tests {
             engine.process_key(ch, false, false);
         }
         assert_eq!(engine.composed_text(), "nam");
+    }
+
+    // ===== I. Tone relocation (tone typed before final consonant) =====
+
+    #[test]
+    fn tone_before_consonant_xuat() {
+        // User types tone 's' before final 't': xuaast → xuất
+        assert_eq!(compose("xuaast"), "xuất");
+    }
+
+    #[test]
+    fn tone_before_consonant_viet() {
+        // User types tone 'j' before final 't': vieejt → việt
+        assert_eq!(compose("vieejt"), "việt");
+    }
+
+    #[test]
+    fn tone_before_consonant_hoang() {
+        // User types tone 's' before 'ng': hoasng → hoáng
+        assert_eq!(compose("hoasng"), "hoáng");
+    }
+
+    #[test]
+    fn horn_before_o_truong() {
+        // User types 'w' before 'o': truwong → trương
+        assert_eq!(compose("truwowng"), "trương");
+    }
+
+    #[test]
+    fn horn_before_o_duoc() {
+        // User types 'w' before 'o': dduwocj → được
+        assert_eq!(compose("dduwocj"), "được");
+    }
+
+    #[test]
+    fn tone_oa_no_ending() {
+        // hoa + grave → hòa (tone on 'o', no ending consonant)
+        assert_eq!(compose("hoaf"), "hòa");
+    }
+
+    #[test]
+    fn tone_oa_with_ending() {
+        // hoan + tone → hoán (tone on 'a', has ending consonant)
+        assert_eq!(compose("hoans"), "hoán");
+    }
+
+    #[test]
+    fn tone_ua_no_ending() {
+        // c + u + s(acute→cú) + a + r(hỏi relocates to 'u') → của
+        assert_eq!(compose("cusar"), "của");
     }
 
     // ===== Accessors =====
