@@ -80,7 +80,14 @@ class VantInputController: IMKInputController {
     }
 
     override func commitComposition(_ sender: Any!) {
-        forceCommit(client: sender as? (any IMKTextInput))
+        guard let client = sender as? (any IMKTextInput) else {
+            NSLog("VantIME: commitComposition sender is not IMKTextInput, resetting engine")
+            if vant_engine_is_composing(engine) == 1 {
+                let _ = vant_engine_reset(engine)
+            }
+            return
+        }
+        forceCommit(client: client)
     }
 
     // MARK: - Helpers
@@ -142,6 +149,11 @@ class VantInputController: IMKInputController {
         let result = vant_engine_force_commit(engine)
         let text = extractText(from: result)
         if !text.isEmpty {
+            client.setMarkedText(
+                markedTextAttributes(""),
+                selectionRange: NSRange(location: 0, length: 0),
+                replacementRange: NSRange(location: NSNotFound, length: 0)
+            )
             client.insertText(
                 text as NSString,
                 replacementRange: NSRange(location: NSNotFound, length: 0)

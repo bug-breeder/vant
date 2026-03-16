@@ -538,7 +538,7 @@ mod tests {
 
     #[test]
     fn tone_oa_no_ending() {
-        // hoa + tone → hóa (tone on 'o', no ending consonant)
+        // hoa + grave → hòa (tone on 'o', no ending consonant)
         assert_eq!(compose("hoaf"), "hòa");
     }
 
@@ -550,7 +550,7 @@ mod tests {
 
     #[test]
     fn tone_ua_no_ending() {
-        // cua + tone → của (tone on 'u', no ending consonant)
+        // c + u + s(acute→cú) + a + r(hỏi relocates to 'u') → của
         assert_eq!(compose("cusar"), "của");
     }
 

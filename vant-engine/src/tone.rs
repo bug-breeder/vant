@@ -440,6 +440,21 @@ mod tests {
     }
 
     #[test]
+    fn tone_pos_uu_horn() {
+        // ưu → first vowel
+        assert_eq!(calculate_tone_position(&['ư', 'u'], false, "l"), 0);
+        assert_eq!(calculate_tone_position(&['ư', 'u'], true, "l"), 0);
+    }
+
+    #[test]
+    fn tone_pos_ay_no_ending() {
+        // ay without ending consonant → first vowel
+        assert_eq!(calculate_tone_position(&['a', 'y'], false, "m"), 0);
+        // ay with ending consonant → second vowel
+        assert_eq!(calculate_tone_position(&['a', 'y'], true, "m"), 1);
+    }
+
+    #[test]
     fn tone_pos_ua_no_ending() {
         assert_eq!(calculate_tone_position(&['u', 'a'], false, "c"), 0); // của
     }
