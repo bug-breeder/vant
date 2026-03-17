@@ -28,8 +28,22 @@
     <string>$(PRODUCT_MODULE_NAME).VantInputController</string>
     <key>InputMethodServerDelegateClass</key>
     <string>$(PRODUCT_MODULE_NAME).VantInputController</string>
-    <key>TISIntendedLanguage</key>
-    <string>vi</string>
+    <key>tsInputModeListKey</key>
+    <dict>
+        <key>com.vant.inputmethod.Vant.Vietnamese</key>
+        <dict>
+            <key>TISIntendedLanguage</key>
+            <string>vi</string>
+            <key>TISInputSourceID</key>
+            <string>com.vant.inputmethod.Vant.Vietnamese</string>
+            <key>tsInputModeScriptKey</key>
+            <string>smUnicodeScript</string>
+            <key>tsInputModeDefaultStateKey</key>
+            <true/>
+            <key>tsInputModePrimaryInScriptKey</key>
+            <true/>
+        </dict>
+    </dict>
     <key>tsInputMethodCharacterRepertoireKey</key>
     <array>
         <string>Latn</string>

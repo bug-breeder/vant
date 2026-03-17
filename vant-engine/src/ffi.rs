@@ -175,9 +175,14 @@ pub extern "C" fn vant_engine_process_key(
     let Some(engine) = (unsafe { engine.as_mut() }) else {
         return VantEngine::empty_result();
     };
-    let ch = char::from_u32(key_char).unwrap_or('\0');
-    let event = engine.inner.process_key(ch, is_backspace, is_escape);
-    engine.event_to_result(event)
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let ch = char::from_u32(key_char).unwrap_or('\0');
+        engine.inner.process_key(ch, is_backspace, is_escape)
+    }));
+    match result {
+        Ok(event) => engine.event_to_result(event),
+        Err(_) => VantEngine::empty_result(),
+    }
 }
 
 /// Force-commit the current composition (e.g. on focus change).
@@ -186,8 +191,13 @@ pub extern "C" fn vant_engine_force_commit(engine: *mut VantEngine) -> VantKeyRe
     let Some(engine) = (unsafe { engine.as_mut() }) else {
         return VantEngine::empty_result();
     };
-    let event = engine.inner.force_commit();
-    engine.event_to_result(event)
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        engine.inner.force_commit()
+    }));
+    match result {
+        Ok(event) => engine.event_to_result(event),
+        Err(_) => VantEngine::empty_result(),
+    }
 }
 
 /// Reset the engine, cancelling any active composition.
@@ -196,8 +206,13 @@ pub extern "C" fn vant_engine_reset(engine: *mut VantEngine) -> VantKeyResult {
     let Some(engine) = (unsafe { engine.as_mut() }) else {
         return VantEngine::empty_result();
     };
-    let event = engine.inner.reset();
-    engine.event_to_result(event)
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        engine.inner.reset()
+    }));
+    match result {
+        Ok(event) => engine.event_to_result(event),
+        Err(_) => VantEngine::empty_result(),
+    }
 }
 
 /// Returns 1 if the engine has an active composition, 0 otherwise.

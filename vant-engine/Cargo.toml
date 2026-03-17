@@ -6,7 +6,7 @@ description = "Core engine for Vant Vietnamese Input Method"
 license = "MIT"
 
 [lib]
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib"]
 
 [dependencies]
 vi = "0.3"

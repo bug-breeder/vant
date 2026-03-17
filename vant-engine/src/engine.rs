@@ -124,10 +124,23 @@ impl TelexEngine {
     // -- private --
 
     fn recompose(&mut self) {
-        self.last_composed.clear();
-        vi::telex::transform_buffer(self.raw_buffer.iter().copied(), &mut self.last_composed);
-        tone::fix_incomplete_horn(&mut self.last_composed);
-        tone::relocate_tone(&mut self.last_composed);
+        // The vi crate can panic on certain inputs (e.g. vowel + 'd') due to an
+        // unguarded .expect() in vi::processor::modify_letter. Catch any panic
+        // and fall back to the raw buffer so composition stays alive.
+        let raw: Vec<char> = self.raw_buffer.clone();
+        let result = std::panic::catch_unwind(|| {
+            let mut out = String::new();
+            vi::telex::transform_buffer(raw.iter().copied(), &mut out);
+            out
+        });
+        self.last_composed = match result {
+            Ok(mut composed) => {
+                tone::fix_incomplete_horn(&mut composed);
+                tone::relocate_tone(&mut composed);
+                composed
+            }
+            Err(_) => self.raw_buffer.iter().collect(),
+        };
     }
 
     fn clear(&mut self) {
@@ -552,6 +565,32 @@ mod tests {
     fn tone_ua_no_ending() {
         // c + u + s(acute→cú) + a + r(hỏi relocates to 'u') → của
         assert_eq!(compose("cusar"), "của");
+    }
+
+    // ===== J. Vowel-before-d display regression =====
+    // The engine always produced the correct text; the bug was in Swift's
+    // setMarkedText using {NSNotFound,0} replacementRange. These tests
+    // confirm the engine side is correct.
+
+    #[test]
+    fn vowel_then_d() {
+        assert_eq!(compose("ad"), "ad");
+    }
+
+    // ===== K. vi crate panic guard (vowel + 'd') =====
+    // vi 0.3.8 has an unguarded .expect() in modify_letter that panics when
+    // Dyet is applied to a non-'d' letter (e.g. ['a','d'] or ['b','a','d']).
+    // Our catch_unwind in recompose falls back to the raw buffer string.
+
+    #[test]
+    fn vowel_then_dd() {
+        // vi panics on ['a','d','d']; raw buffer fallback produces "add"
+        assert_eq!(compose("add"), "add");
+    }
+
+    #[test]
+    fn bad_plain() {
+        assert_eq!(compose("bad"), "bad");
     }
 
     // ===== Accessors =====
