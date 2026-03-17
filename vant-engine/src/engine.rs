@@ -567,18 +567,24 @@ mod tests {
         assert_eq!(compose("cusar"), "của");
     }
 
-    // ===== J. "ad → d" regression (Swift preedit bug, engine should produce "ad") =====
+    // ===== J. Vowel-before-d display regression =====
+    // The engine always produced the correct text; the bug was in Swift's
+    // setMarkedText using {NSNotFound,0} replacementRange. These tests
+    // confirm the engine side is correct.
 
     #[test]
     fn vowel_then_d() {
-        // Engine must produce "ad" — the preedit display bug was in Swift, not here
         assert_eq!(compose("ad"), "ad");
     }
 
+    // ===== K. vi crate panic guard (vowel + 'd') =====
+    // vi 0.3.8 has an unguarded .expect() in modify_letter that panics when
+    // Dyet is applied to a non-'d' letter (e.g. ['a','d'] or ['b','a','d']).
+    // Our catch_unwind in recompose falls back to the raw buffer string.
+
     #[test]
     fn vowel_then_dd() {
-        // vi 0.3.8 panics on ['a','d','d'] (Dyet can't modify 'a'); we fall
-        // back to raw buffer so the user sees "add" instead of crashing.
+        // vi panics on ['a','d','d']; raw buffer fallback produces "add"
         assert_eq!(compose("add"), "add");
     }
 
