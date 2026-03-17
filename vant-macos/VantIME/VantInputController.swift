@@ -5,6 +5,8 @@ import InputMethodKit
 class VantInputController: IMKInputController {
 
     private var engine: OpaquePointer?
+    private var markedTextStartLocation: Int = NSNotFound
+    private var previousMarkedLength: Int = 0
 
     override init!(server: IMKServer!, delegate: Any!, client inputClient: Any!) {
         super.init(server: server, delegate: delegate, client: inputClient)
@@ -38,6 +40,14 @@ class VantInputController: IMKInputController {
 
         let keyCode = event.keyCode
         let isComposing = vant_engine_is_composing(engine) == 1
+
+        // Navigation and commit-passthrough keys: commit preedit then pass through to app
+        // left=123, right=124, down=125, up=126, home=115, end=119, pgup=116, pgdn=121, return=36, tab=48
+        let commitAndPassthroughKeys: Set<UInt16> = [123, 124, 125, 126, 115, 119, 116, 121, 36, 48]
+        if commitAndPassthroughKeys.contains(keyCode) {
+            if isComposing { forceCommit(client: client) }
+            return false
+        }
 
         // Backspace (keyCode 51)
         if keyCode == 51 {
@@ -110,25 +120,42 @@ class VantInputController: IMKInputController {
 
         switch result.event_type {
         case VantEventType_Composing:
+            if markedTextStartLocation == NSNotFound {
+                markedTextStartLocation = client.selectedRange().location
+            }
+            let replRange: NSRange = previousMarkedLength > 0
+                ? NSRange(location: markedTextStartLocation, length: previousMarkedLength)
+                : NSRange(location: NSNotFound, length: 0)
             client.setMarkedText(
                 markedTextAttributes(text),
                 selectionRange: NSRange(location: text.utf16.count, length: 0),
-                replacementRange: NSRange(location: NSNotFound, length: 0)
+                replacementRange: replRange
             )
+            previousMarkedLength = text.utf16.count
             return true
 
         case VantEventType_Committed:
+            let markedRange = client.markedRange()
+            let replRange: NSRange
+            if markedRange.location != NSNotFound && markedRange.length > 0 {
+                replRange = markedRange
+            } else if markedTextStartLocation != NSNotFound {
+                replRange = NSRange(location: markedTextStartLocation, length: previousMarkedLength)
+            } else {
+                replRange = NSRange(location: NSNotFound, length: 0)
+            }
+            markedTextStartLocation = NSNotFound
+            previousMarkedLength = 0
             var insertString = text
             if result.committed_char != 0, let scalar = Unicode.Scalar(result.committed_char) {
                 insertString += String(scalar)
             }
-            client.insertText(
-                insertString as NSString,
-                replacementRange: NSRange(location: NSNotFound, length: 0)
-            )
+            client.insertText(insertString as NSString, replacementRange: replRange)
             return true
 
         case VantEventType_Reset:
+            markedTextStartLocation = NSNotFound
+            previousMarkedLength = 0
             client.setMarkedText(
                 markedTextAttributes(""),
                 selectionRange: NSRange(location: 0, length: 0),
@@ -148,16 +175,20 @@ class VantInputController: IMKInputController {
         guard let client = client, vant_engine_is_composing(engine) == 1 else { return }
         let result = vant_engine_force_commit(engine)
         let text = extractText(from: result)
+        let savedStart = markedTextStartLocation
+        let savedLength = previousMarkedLength
+        markedTextStartLocation = NSNotFound
+        previousMarkedLength = 0
         if !text.isEmpty {
+            let replRange: NSRange = savedStart != NSNotFound
+                ? NSRange(location: savedStart, length: savedLength)
+                : NSRange(location: NSNotFound, length: 0)
             client.setMarkedText(
                 markedTextAttributes(""),
                 selectionRange: NSRange(location: 0, length: 0),
                 replacementRange: NSRange(location: NSNotFound, length: 0)
             )
-            client.insertText(
-                text as NSString,
-                replacementRange: NSRange(location: NSNotFound, length: 0)
-            )
+            client.insertText(text as NSString, replacementRange: replRange)
             NSLog("VantIME: Force-committed '%@'", text)
         }
     }

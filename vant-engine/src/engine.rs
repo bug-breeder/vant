@@ -124,10 +124,23 @@ impl TelexEngine {
     // -- private --
 
     fn recompose(&mut self) {
-        self.last_composed.clear();
-        vi::telex::transform_buffer(self.raw_buffer.iter().copied(), &mut self.last_composed);
-        tone::fix_incomplete_horn(&mut self.last_composed);
-        tone::relocate_tone(&mut self.last_composed);
+        // The vi crate can panic on certain inputs (e.g. vowel + 'd') due to an
+        // unguarded .expect() in vi::processor::modify_letter. Catch any panic
+        // and fall back to the raw buffer so composition stays alive.
+        let raw: Vec<char> = self.raw_buffer.clone();
+        let result = std::panic::catch_unwind(|| {
+            let mut out = String::new();
+            vi::telex::transform_buffer(raw.iter().copied(), &mut out);
+            out
+        });
+        self.last_composed = match result {
+            Ok(mut composed) => {
+                tone::fix_incomplete_horn(&mut composed);
+                tone::relocate_tone(&mut composed);
+                composed
+            }
+            Err(_) => self.raw_buffer.iter().collect(),
+        };
     }
 
     fn clear(&mut self) {
@@ -552,6 +565,26 @@ mod tests {
     fn tone_ua_no_ending() {
         // c + u + s(acute→cú) + a + r(hỏi relocates to 'u') → của
         assert_eq!(compose("cusar"), "của");
+    }
+
+    // ===== J. "ad → d" regression (Swift preedit bug, engine should produce "ad") =====
+
+    #[test]
+    fn vowel_then_d() {
+        // Engine must produce "ad" — the preedit display bug was in Swift, not here
+        assert_eq!(compose("ad"), "ad");
+    }
+
+    #[test]
+    fn vowel_then_dd() {
+        // vi 0.3.8 panics on ['a','d','d'] (Dyet can't modify 'a'); we fall
+        // back to raw buffer so the user sees "add" instead of crashing.
+        assert_eq!(compose("add"), "add");
+    }
+
+    #[test]
+    fn bad_plain() {
+        assert_eq!(compose("bad"), "bad");
     }
 
     // ===== Accessors =====
